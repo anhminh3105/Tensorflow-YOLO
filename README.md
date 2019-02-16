@@ -45,7 +45,7 @@ If you have never try to install Tensorflow-GPU in the prior way, I would recomm
       ```
       conda install -c anaconda tensorflow-gpu
       ```
-     5. Install OpenCV2:
+5. Install OpenCV2:
       ```
       conda install -c conda-forge opencv
       ```
