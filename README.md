@@ -53,7 +53,7 @@ If you have never try to install Tensorflow-GPU in the prior way, I would recomm
       ```
 
 ### Usage:
-* To detect on images, specify either the path to the image or the directory of images to the call of the method `imset_frompath(path)`, then run all the code. Output images will be saved to `outputs/` of the current working directory.
+* To detect on images, open file ***detect_images.ipynb*** with `jupyter notebook` and specify either the path to the image or the directory of images to the call of the method `imset_frompath(path)`, then run all the code. Output images will be saved to `outputs/` of the current working directory.
 ![image](https://user-images.githubusercontent.com/18170028/52904485-ab4b3900-3235-11e9-9a79-c23e94c1bf28.png)
 * To detect live on camera, run the following command in prompt/conda prompt:
     ```
