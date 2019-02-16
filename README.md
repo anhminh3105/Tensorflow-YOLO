@@ -3,9 +3,11 @@ A YOLOv3-416 implementation on TensorFlow Low-Level API
 
 ![webp net-gifmaker 3](https://user-images.githubusercontent.com/18170028/52903429-d9288180-3225-11e9-8249-ed435b234931.gif)
 
-This is currently the project I'm making for my bachelor thesis at [VAMK](http://www.puv.fi/en/ "VAMK's Homepage") with **Topic: Deploying YOLOv3 on Movidius Raspberry Pi (3B+).**
+This is the thesis work I'm currently working on for my bachelor degree at [VAMK](http://www.puv.fi/en/ "VAMK's Homepage").
 
-I acknowledged that there are a lot of good works on YOLO already but since I am just so interested in this, and coincidentally my supervisor also proposed this topic to me, I just went on to make another version of my own.
+**Thesis topic: Deploying YOLOv3 on Movidius Raspberry Pi (3B+).**
+
+I acknowledged that there are a lot of good works on YOLO already but since I am just so interested in this, and being also offered by my supervisor coincidentally, I just went on to make another version of my own.
 
 ## Summary:
 * The model was made in pure TensorFlow Low-Level API, detection outputs were processed in NumPy and OpenCV2 was used for image manipulations.
@@ -30,7 +32,7 @@ I acknowledged that there are a lot of good works on YOLO already but since I am
 ### Installation:
 any of these libraries above can be easily installed with the following command: `pip install package_name` except for TensorFlow-GPU as you have to also install Nvidia CUDA + cuDNN which is a very pessimistic hassle. Being committed to avoid this in every way, I use [Anaconda](https://www.anaconda.com/ "Anaconda Homepage") for ease of package and working environment management, which I will use for this instruction. 
 
-If you have never try to install Tensorflow-GPU in the prior way, I would recommend you to try it first to have a taste so could appreciate the simplicity of the latter ;)
+If you have never try to install Tensorflow-GPU in the prior way, I would recommend you to try it first to have a taste so you could appreciate the simplicity of the latter ;)
 
 1. download and install Anaconda from its Website.
 2. Open Anaconda Prompt/add the path of Anaconda Executable to variable path to use within CMD and issue command to create a new environment:
