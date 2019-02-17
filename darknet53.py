@@ -1,12 +1,12 @@
-import tensorflow as tf
 from layers import Layers
 
 class Darknet53(Layers):
 
-    def __init__(self, is_training=False):
+    def __init__(self, input, is_training=False):
         self.is_training = is_training
-        
-    def dark_graph(self, input):
+        self.input = input
+
+    def dark_graph(self):
         '''
         Graph of the Darknet-53 model.
         
@@ -20,7 +20,7 @@ class Darknet53(Layers):
 
         '''
         #---------------------------------------------------------------------------------
-        input = self.conv2d_bn(input=input,
+        input = self.conv2d_bn(input=self.input,
                         num_kernels=32)
         #---------------------------------------------------------------------------------
         input = self.conv2d_bn(input=input,

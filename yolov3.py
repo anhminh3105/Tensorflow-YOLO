@@ -1,7 +1,6 @@
 import tensorflow as tf
 from darknet53 import Darknet53
 from load import Weight_loader
-from predict import predict
 
 class Yolov3(Darknet53):
     
@@ -10,15 +9,15 @@ class Yolov3(Darknet53):
             (116, 90), (156, 198), (373, 326)]
             
 
-    def __init__(self, is_training=False):
+    def __init__(self, input, is_training=False):
         self.is_training = is_training
         self.sess = tf.Session()
+        self.input = input
 
-
-    def graph(self, input):
-        input_size = input.get_shape().as_list()[1]
+    def graph(self):
+        input_size = self.input.get_shape().as_list()[1]
         with tf.variable_scope('darknet53'):
-            route_1, route_2, route_3 = self.dark_graph(input)
+            route_1, route_2, route_3 = self.dark_graph()
         with tf.variable_scope('yolov3'):
             predictions_1, route = self._detection_block(route_1, 512, self.anchors[6:], input_size)
             route = self.conv2d_bn(input=route,
@@ -34,7 +33,7 @@ class Yolov3(Darknet53):
             route_3 = tf.concat([route, route_3], axis=-1)
             predictions_3, route = self._detection_block(route_3, 128, self.anchors[:3], input_size)
             
-        return tf.concat([predictions_1, predictions_2, predictions_3], axis=1)
+        return tf.concat([predictions_1, predictions_2, predictions_3], axis=1, name='output')
 
     def _upsample(self, input, stride=2):
         grid_shape = input.get_shape().as_list()
