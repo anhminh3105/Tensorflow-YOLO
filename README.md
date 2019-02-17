@@ -18,6 +18,7 @@ I acknowledged that there are a lot of good works on YOLO already but since I am
 
 ## What comes next:
 ~~1. Frozen model generation and handling, for needlessness of weight file loading every launch time.~~
+
 2. Code to run model on Movidius Raspberry Pi.
 3. Trainer for custom object detection.
 
