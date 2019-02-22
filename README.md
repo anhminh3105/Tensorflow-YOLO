@@ -76,6 +76,7 @@ If you have never try to install Tensorflow-GPU in the prior way, I would recomm
     ...\YOLOw> python ...\Intel\computer_vision_sdk\deployment_tools\model_optimizer\mo_tf.py --input_model .\frozen_yolow.pb --tensorflow_use_custom_operations_config .\yolow_ir_config.json --batch 1 --data_type FP16 --output_dir .\ir\
     ```
     please mind the path since they are a little dependent to your directory
+    
     please also output the IR to the ir directory since the app will read from it by default.
 - start live detection using the NCS:
     ```
