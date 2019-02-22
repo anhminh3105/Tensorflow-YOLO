@@ -38,11 +38,11 @@ If you have never try to install Tensorflow-GPU in the prior way, I would recomm
 
 1. download and install Anaconda from its Website.
    from this point I will be using my personal default of naming, you may change it however you like
-2. Open Anaconda Prompt (or add the path of Anaconda Executable to sytem variables to use within CMD) and issue command to create a new environment name `tf-gpu`:
+2. Open Anaconda Prompt (or add the path of Anaconda Executable to sytem variables to use within CMD) and create a vitural environment named `tf-gpu`:
       ```
       conda create --name tf-gpu
       ```
-3. Now activate it
+3. activate it
       ```
       conda activate tf-gpu
       ```
@@ -70,13 +70,20 @@ If you have never try to install Tensorflow-GPU in the prior way, I would recomm
 *This instruction is in Windows but the procedures are the same for other OSes please follow up and refer to the installation instruction from Intel.
 - Install [Intel Open-VINO](https://software.intel.com/en-us/openvino-toolkit)
 - if:
+
       1. you have set anaconda to system variables
+
       2. and used my naming for the virtual environment
+
       3. install open-vino to C:\ drive
+
   then just run generate_ir.bat and see Usage.
+
 - else:
       1. Activate your virtual environment (skip if you dont use it)
+
       2. run the file C:\Intel\computer_vision_sdk\bin\setupvars.bat to source open-vino SDK for Python
+
       3. run the following command to generate the intermediate representations (IR):
             ```
                   ...\YOLOw> python ...\Intel\computer_vision_sdk\deployment_tools\model_optimizer\mo_tf.py --input_model .\frozen_yolow.pb --tensorflow_use_custom_operations_config .\yolow_ir_config.json --batch 1 --data_type FP16 --output_dir .\ir\
