@@ -1,6 +1,7 @@
 import tensorflow as tf
 from yolov3 import *
 from predict import predict
+from load import Weight_loader
 
 class Yolow(Yolov3):
 
@@ -16,6 +17,7 @@ class Yolow(Yolov3):
             if not input:
                 input = tf.placeholder(tf.float32, [None, 416, 416, 3], 'input')
             self.input = input
+            self.input_size = self.input.get_shape().as_list()[1]
             with tf.variable_scope('detections'):
                 self.output = self.graph() 
             self.loader = Weight_loader(tf.global_variables('detections'), weight_path)

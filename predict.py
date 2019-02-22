@@ -77,3 +77,39 @@ def predict(batch_predictions, confidence_threshold=.6, iou_threshold=.5):
         keep_preds = per_class_non_max_suppression(tops, bots, confidence, classes, scores)
         pred_list.append(keep_preds)
     return pred_list
+
+def sigmoid(x):
+  return 1 / (1 + np.exp(-x))
+
+def np_transform_predictions(predictions, anchor_list, input_size):
+    num_anchors = len(anchor_list)
+    output_shape = predictions.shape # if output_shape=(m, 13, 13, 255)
+    grid_sz = output_shape[1] # grid_sz = 13
+    grid_dim = grid_sz * grid_sz # grid_dim = 169
+    stride = input_size // grid_sz
+    
+    predictions = np.reshape(predictions, [-1, grid_dim*num_anchors, 85]) # predictions = (m, 507, 85)
+    
+    anchors_xy, anchors_hw, confidence, classes = np.split(predictions, [2, 4, 5], axis=-1) # split along the last dimension
+
+    anchors_xy = sigmoid(anchors_xy)
+    confidence = sigmoid(confidence)
+    classes = sigmoid(classes)
+    
+    grid_sz_range = range(grid_sz)
+    grid_x, grid_y = np.meshgrid(grid_sz_range, grid_sz_range)
+    grid_x = np.reshape(grid_x, [-1, 1])
+    grid_y = np.reshape(grid_y, [-1, 1])
+    grid_offset = np.concatenate([grid_x, grid_y], axis=-1)
+    grid_offset = np.tile(grid_offset, [1, num_anchors])
+    grid_offset = np.reshape(grid_offset, [1, -1, 2])
+    
+    anchors_xy = anchors_xy + grid_offset
+    anchors_xy = anchors_xy * stride
+    
+    anchors = [(a[0] / stride, a[1] / stride) for a in anchor_list]
+    anchors = np.tile(anchors, [grid_dim, 1])
+    
+    anchors_hw = anchors * np.exp(anchors_hw) * stride
+    
+    return np.concatenate([anchors_xy, anchors_hw, confidence, classes], axis=-1) # concat along the last dimension

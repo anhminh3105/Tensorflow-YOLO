@@ -33,7 +33,7 @@ def imresize(im, to_sizes):
     
     return padded_im
 
-def improcess(ims, to_sizes):
+def improcess(ims, to_sizes, to_rgb=True):
     '''
     Prepare an image for model's input (using OpenCV).
     Args:
@@ -46,7 +46,8 @@ def improcess(ims, to_sizes):
     '''
     imlist = []
     for im in ims:
-        im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
+        if to_rgb:
+            im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
         im = imresize(im, to_sizes)
         imlist.append(im)
     return np.array(imlist)/255
@@ -116,14 +117,6 @@ def add_overlays(frame, preds, pred_wh, classnames, palette):
 def visualise(orig_imlist, pred_list, pred_ranges, classnames, palette):
     '''
     Visualise predictions on original images.
-    
-    Args:
-    orig_imlist -- list of original images.
-    pred_list -- list of dictionaries of predictions.
-    input_sizes -- shape of the input to YOLOv3 model as a list of length 4.
-    
-    Returns:
-    images with added overlays over predicted objects.
     '''
     imlist = []
     for im, preds in zip(orig_imlist, pred_list):

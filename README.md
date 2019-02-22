@@ -13,12 +13,14 @@ I acknowledged that there are a lot of good works on YOLO already but since I am
 * The model was made in pure TensorFlow Low-Level API, detection outputs were processed in NumPy and OpenCV2 was used for image manipulations.
 * Non TensorFlow concise easy to use interface for loading, predicting on YOLOv3-416 model. (training to be added very soon)
 * Also come with a concise easy to use interface for loading, pre-processing and post-processing images.
+* Interface for running on Intel NCS (required installation of Open-VINO)
 * Integratable to any applications.
 * Code was written as modular as possible.
 
+
 ## What comes next:
 1. ~~Frozen model generation and handling, for needlessness of weight file loading every launch time.~~
-2. Code to run model on Movidius Raspberry Pi.
+2. ~~Code to run model on Movidius~~ Raspberry Pi.
 3. Trainer for custom object detection.
 
 ## Instructions:
@@ -30,7 +32,7 @@ I acknowledged that there are a lot of good works on YOLO already but since I am
 - Jupyter Notebook (only pre-installed in Anaconda)
 
 ### Installation:
-any of these libraries above can be easily installed with the following command: `pip install package_name` except for TensorFlow-GPU as you have to also install Nvidia CUDA + cuDNN which is a very pessimistic hassle. Being committed to avoid this in every way, I use [Anaconda](https://www.anaconda.com/ "Anaconda Homepage") for ease of package and working environment management, which I will use for this instruction. 
+any of these libraries above can be easily installed with the following command: `pip install package_name` except for TensorFlow-GPU as you have to also install Nvidia CUDA + cuDNN which is a very pessimistic hassle. Being committed to avoid this in every way, I use [Anaconda](https://www.anaconda.com/ "Anaconda Homepage") for ease of package and working environment management, which I will use for this instruction.
 
 If you have never try to install Tensorflow-GPU in the prior way, I would recommend you to try it first to have a taste so you could appreciate the simplicity of the latter ;)
 
@@ -58,6 +60,26 @@ If you have never try to install Tensorflow-GPU in the prior way, I would recomm
 * To detect live on camera, run the following command in prompt/conda prompt:
     ```
     python live.py
+    ```
+### NCS:
+
+#### Dependencies:
+- Open-VINO
+#### Installation:
+- install [Intel Open-VINO](https://software.intel.com/en-us/openvino-toolkit)
+#### Usage:
+  this instruction is in Windows but the procedures are the same for other OSes please follow up and refer to the installation instruction from Intel.
+- Activate your virtual environment (Optionally)
+- run the file C:\Intel\computer_vision_sdk\bin\setupvars.bat to set up env variables.
+- run the following command to generate the intermediate representations (IR):
+    ```
+    ...\YOLOw> python ...\Intel\computer_vision_sdk\deployment_tools\model_optimizer\mo_tf.py --input_model .\frozen_yolow.pb --tensorflow_use_custom_operations_config .\yolow_ir_config.json --batch 1 --data_type FP16 --output_dir .\ir\
+    ```
+    please mind the path since they are a little dependent to your directory
+    please also output the IR to the ir directory since the app will read from it by default.
+- start live detection using the NCS:
+    ```
+    python live_ncs.py
     ```
   
 ## References:

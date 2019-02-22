@@ -1,0 +1,2 @@
+if not exist "ir\" mkdir ir
+C:\Users\anhminh\Anaconda3\envs\open-vino\python.exe C:\Intel\computer_vision_sdk\deployment_tools\model_optimizer\mo_tf.py --input_model .\frozen_yolow.pb --tensorflow_use_custom_operations_config .\yolow_ir_config.json --batch 1 --data_type FP16 --output_dir .\ir\
