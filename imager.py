@@ -1,7 +1,6 @@
 import numpy as np
 from utils import *
 from images import *
-from yolov3 import *
 np.random.seed(2)
 
 class Imager(object):

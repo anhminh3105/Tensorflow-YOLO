@@ -1,3 +1,4 @@
+import tensorflow as tf
 from layers import Layers
 
 class Darknet53(Layers):

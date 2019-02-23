@@ -81,7 +81,7 @@ def predict(batch_predictions, confidence_threshold=.6, iou_threshold=.5):
 def sigmoid(x):
   return 1 / (1 + np.exp(-x))
 
-def np_transform_predictions(predictions, anchor_list, input_size):
+def region_np(predictions, anchor_list, input_size):
     num_anchors = len(anchor_list)
     output_shape = predictions.shape # if output_shape=(m, 13, 13, 255)
     grid_sz = output_shape[1] # grid_sz = 13

@@ -1,11 +1,10 @@
 import tensorflow as tf
 from darknet53 import Darknet53
+from utils import *
 
 class Yolov3(Darknet53):
     
-    _ANCHORS = [(10, 13), (16, 30), (33, 23),
-            (30, 61), (62, 45), (59, 119),
-            (116, 90), (156, 198), (373, 326)]
+    _ANCHORS = anchors_for_yolov3()
     objectness = 1
     coordinates=4
     num_classes = 80
@@ -45,39 +44,6 @@ class Yolov3(Darknet53):
                                                 size=(output_dim, output_dim),
                                                 name='upsampled_' + str(output_dim))
 
-    def _transform_predictions(self, predictions, anchor_list):
-        num_anchors = len(anchor_list)
-        output_shape = predictions.get_shape().as_list() # if output_shape=(m, 13, 13, 255)
-        grid_sz = output_shape[1] # grid_sz = 13
-        grid_dim = grid_sz * grid_sz # grid_dim = 169
-        stride = self.input_size // grid_sz
-        
-        predictions = tf.reshape(predictions, [-1, grid_dim*num_anchors, self.num_predictions]) # predictions = (m, 507, 85)
-        
-        anchors_xy, anchors_hw, confidence, classes = tf.split(predictions, [2, 2, 1, self.num_classes], axis=-1) # split along the last dimension
-
-        anchors_xy = tf.sigmoid(anchors_xy)
-        confidence = tf.sigmoid(confidence)
-        classes = tf.sigmoid(classes)
-        
-        grid_sz_range = tf.range(grid_sz, dtype=tf.float32)
-        grid_x, grid_y = tf.meshgrid(grid_sz_range, grid_sz_range)
-        grid_x = tf.reshape(grid_x, [-1, 1])
-        grid_y = tf.reshape(grid_y, [-1, 1])
-        grid_offset = tf.concat([grid_x, grid_y], axis=-1)
-        grid_offset = tf.tile(grid_offset, [1, num_anchors])
-        grid_offset = tf.reshape(grid_offset, [1, -1, 2])
-        
-        anchors_xy = anchors_xy + grid_offset
-        anchors_xy = anchors_xy * stride
-        
-        anchors = [(a[0] / stride, a[1] / stride) for a in anchor_list]
-        anchors = tf.tile(anchors, [grid_dim, 1])
-        
-        anchors_hw = anchors * tf.exp(anchors_hw) * stride
-        
-        return tf.concat([anchors_xy, anchors_hw, confidence, classes], axis=-1) # concat along the last dimension
-
     def _detection_block(self, input, num_kernels, anchor_list):
         num_anchors = len(anchor_list)
         output_depth = num_anchors * self.num_predictions
@@ -91,11 +57,7 @@ class Yolov3(Darknet53):
             input = self.conv2d_bn(input=input,
                             num_kernels=num_kernels*2)
         
-        predictions = self.conv2d(input=input,
-                            num_kernels=output_depth,
-                            with_bias=True)
-
-        predictions = self._transform_predictions(predictions, anchor_list)
+        detections = self.detection(input, output_depth, anchor_list, self.input_size)
         
-        return predictions, route
+        return detections, route
         
