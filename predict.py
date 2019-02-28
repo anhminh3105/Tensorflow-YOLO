@@ -43,10 +43,10 @@ def non_max_suppression(tops, bots, confidence, classes, scores, iou_threshold=.
         ious = iou(box1, box2)
         keep_idxs = ious < iou_threshold
         idxs = idxs[keep_idxs]
-    if type(classes) is np.int64:
-        classes = np.full(np.array(pick).shape, classes)
-    else:
+    try:
         classes = classes[pick]
+    except:
+        classes = np.full(np.array(pick).shape, classes)
     return tops[pick], bots[pick], scores[pick], classes
 
 def per_class_non_max_suppression(tops, bots, confidence, classes, scores, iou_threshold=.5):
@@ -81,7 +81,7 @@ def predict(batch_predictions, confidence_threshold=.6, iou_threshold=.5):
 def sigmoid(x):
   return 1 / (1 + np.exp(-x))
 
-def np_transform_predictions(predictions, anchor_list, input_size):
+def region_np(predictions, anchor_list, input_size):
     num_anchors = len(anchor_list)
     output_shape = predictions.shape # if output_shape=(m, 13, 13, 255)
     grid_sz = output_shape[1] # grid_sz = 13

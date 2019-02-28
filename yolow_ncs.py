@@ -1,14 +1,15 @@
 import os, sys, logging
 from argparse import ArgumentParser
 from openvino.inference_engine import IEPlugin, IENetwork
-from yolov3 import *
 from utils import *
 from predict import *
 
 logging.basicConfig(format='[%(levelname)s] %(message)s', level=logging.INFO, stream=sys.stdout)
 log=logging.getLogger()
 
-class YolowNCS(Yolov3):
+class YolowNCS(object):
+
+    _ANCHORS = anchors_for_yolov3()
 
     def __init__(self, model_name=None):
         if model_name is None:
@@ -33,7 +34,7 @@ class YolowNCS(Yolov3):
         for preds in pred_dict.values():
             preds = np.transpose(preds, [0, 2, 3, 1])
             get_to = get_from + 3
-            batch_predictions.append(np_transform_predictions(preds, self._ANCHORS[get_from:get_to], input_size))
+            batch_predictions.append(region_np(preds, self._ANCHORS[get_from:get_to], input_size))
             get_from = get_to
         batch_predictions = np.concatenate(batch_predictions, axis=1)
         return predict(batch_predictions, confidence_theshold, iou_theshould)
