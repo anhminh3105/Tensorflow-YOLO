@@ -66,34 +66,39 @@ If you have never try to install Tensorflow-GPU in the prior way, I would recomm
 
 #### Dependencies:
 - Open-VINO
+- picamera (optionally if you intend to run on rapberry pi equipped with Pi Camera module)
 #### Installation:
 *This instruction is in Windows but the procedures are the same for other OSes please follow up and refer to the installation instruction from Intel.
 - Install [Intel Open-VINO](https://software.intel.com/en-us/openvino-toolkit)
 - if:
 
-      1. you have set anaconda to system variables
+     1. you have set anaconda to system variables
 
-      2. and used my naming for the virtual environment
+     2. and used my naming for the virtual environment
 
-      3. install open-vino to C:\ drive
+     3. install open-vino to C:\ drive
 
-  then just run generate_ir.bat and see Usage.
+  then just run generate_ir.bat in a command prompt and see Usage.
 
 - else:
 
-      1. Activate your virtual environment (skip if you dont use it)
+     1. Activate your virtual environment (skip if you dont use it)
 
-      2. run the file C:\Intel\computer_vision_sdk\bin\setupvars.bat to source open-vino SDK for Python
+     2. run the file C:\Intel\computer_vision_sdk\bin\setupvars.bat to source open-vino SDK for Python
 
-      3. run the following command to generate the intermediate representations (IR):
-            ```
-                  ...\YOLOw> python ...\Intel\computer_vision_sdk\deployment_tools\model_optimizer\mo_tf.py --input_model .\frozen_yolow.pb --tensorflow_use_custom_operations_config .\yolow_ir_config.json --batch 1 --data_type FP16 --output_dir .\ir\
-            ```    
-      *please also output the IR to the ir\ directory since the app will read from it by default.
+     3. run the following command to generate the intermediate representations (IR):
+      ```
+         ...\YOLOw> python ...\Intel\computer_vision_sdk\deployment_tools\model_optimizer\mo_tf.py --input_model .\frozen_yolow.pb --tensorflow_use_custom_operations_config .\yolow_ir_config.json --batch 1 --data_type FP16 --output_dir .\ir\
+      ```    
+ *Please also output the IR to the ir\ directory since the app will read from it by default.
 #### Usage
-- Start live detection using the NCS:
+- Start live detection using the NCS: (on PC/PRi with external camera)
     ```
     python live_ncs.py
+    ```
+- Start live detection using the NCS: (on RPi with Pi camera module)
+    ```
+    python live_ncs_rpi.py
     ```
   
 ## References:
@@ -102,3 +107,5 @@ If you have never try to install Tensorflow-GPU in the prior way, I would recomm
 [DarkFlow](https://github.com/thtrieu/darkflow)
 
 [TensorFlow-SLIM YOLOv3](https://github.com/mystic123/tensorflow-yolo-v3)
+
+[Open-VINO](https://software.intel.com/en-us/articles/OpenVINO-ModelOptimizer)
