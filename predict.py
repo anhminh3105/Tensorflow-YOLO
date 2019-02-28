@@ -43,10 +43,10 @@ def non_max_suppression(tops, bots, confidence, classes, scores, iou_threshold=.
         ious = iou(box1, box2)
         keep_idxs = ious < iou_threshold
         idxs = idxs[keep_idxs]
-    if type(classes) is np.int64:
-        classes = np.full(np.array(pick).shape, classes)
-    else:
+    try:
         classes = classes[pick]
+    except:
+        classes = np.full(np.array(pick).shape, classes)
     return tops[pick], bots[pick], scores[pick], classes
 
 def per_class_non_max_suppression(tops, bots, confidence, classes, scores, iou_threshold=.5):
