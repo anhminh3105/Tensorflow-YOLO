@@ -9,8 +9,8 @@ import io
 imer = Imager()
 yl_ncs= YolowNCS()
 camera = PiCamera()
-camera.resolution = (800, 600)
-# camera.framerate = 32
+camera.resolution = (1024, 720)
+camera.framerate = 30
 rawCapture = PiRGBArray(camera)
 frame_interval = 1
 fps_display_interval = 3
@@ -25,9 +25,9 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         input_list = imer.ncs_preprocess()
         start = time()
         pred_list = yl_ncs.predict(input_list)
-        print('this frame takes {:.2}s to process.'.format(time() - start))    
+        print('this frame takes {:.2f}s to process.'.format(time() - start))    
         imer.visualise_preds(pred_list)
-
+        
     duration = time() - start_time
     if duration > fps_display_interval:
         frame_rate = int(frame_count/duration)
