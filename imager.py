@@ -33,7 +33,11 @@ class Imager(object):
         return np.transpose(ims, [0, 3, 1, 2])
 
     def visualise_preds(self, pred_list):
-        return visualise(self.ims, pred_list, self.transform_sizes, self.namelist, self.palette)
+        self.ims = visualise(self.ims, pred_list, self.transform_sizes, self.namelist, self.palette)
+        return self.ims
 
     def imsave(self, ims):
         imwrite(ims)
+
+    def display_fps(self, fps):
+        return display_fps(self.ims[0], fps)

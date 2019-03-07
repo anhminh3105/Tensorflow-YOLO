@@ -10,13 +10,14 @@ imer = Imager()
 yl_ncs= YolowNCS()
 camera = PiCamera()
 camera.resolution = (800, 600)
-camera.framerate = 32
+# camera.framerate = 32
 rawCapture = PiRGBArray(camera)
 frame_interval = 1
 fps_display_interval = 3
 frame_rate = 0
 frame_count = 0
 start_time = time()
+
 for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
     frame = frame.array
     if frame_count % frame_interval == 0:
@@ -25,7 +26,7 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         start = time()
         pred_list = yl_ncs.predict(input_list)
         print('this frame takes {:.2}s to process.'.format(time() - start))    
-        frame = imer.visualise_preds(pred_list)[0]
+        imer.visualise_preds(pred_list)
 
     duration = time() - start_time
     if duration > fps_display_interval:
@@ -33,9 +34,10 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         start_time = time()
         frame_count = 0
         # print('fps: {:.2f}'.format(frame_rate))
-        
-    frame_count += 1
+    
+    frame = imer.display_fps(frame_rate)
     cv2.imshow('NCS YOLOv3 Live', frame)
+    frame_count += 1
     rawCapture.truncate(0)
 
     if cv2.waitKey(1) & 0xFF==ord('q'):
