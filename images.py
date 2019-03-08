@@ -131,7 +131,6 @@ def imwrite(ims):
     [cv2.imwrite(save_dir + '/{}.jpg'.format(i), im) for i, im in zip(range(len(ims)), ims)]
     print('Images have been saved to {}'.format(save_dir))
 
-def display_fps(frame, fps):
-    fps_txt = '{:.2f} fps'.format(fps)
+def display_fps(frame, fps_txt):
     cv2.putText(frame, fps_txt, (2, 20), cv2.FONT_HERSHEY_SIMPLEX, .65, (255, 255, 255), 2, 2)
     return frame

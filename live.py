@@ -7,7 +7,7 @@ imer = Imager()
 yl= Yolow()
 cam = cv2.VideoCapture(0)
 frame_interval = 1
-fps_display_interval = 5
+fps_display_interval = 3
 frame_rate = 0
 frame_count = 0
 start_time = time()
@@ -26,8 +26,9 @@ while True:
         frame_rate = int(frame_count/duration)
         start_time = time()
         frame_count = 0
-        
-    frame = imer.display_fps(frame_rate)
+    
+    fps_txt = '{} fps'.format(frame_rate)
+    frame = imer.display_fps(fps_txt)
     cv2.imshow('YOLOv3 Live', frame)
     frame_count += 1
 
@@ -36,5 +37,3 @@ while True:
 
 cam.release()
 cv2.destroyAllWindows()
-
-
