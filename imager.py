@@ -29,7 +29,7 @@ class Imager(object):
         return improcess(self.ims, self.transform_sizes)
     
     def ncs_preprocess(self):
-        ims = improcess(self.ims, self.transform_sizes, to_rgb=False)
+        ims = improcess(self.ims, self.transform_sizes, to_rgb=False, normalise=False) # ims are normalised by the ncs.
         return np.transpose(ims, [0, 3, 1, 2])
 
     def visualise_preds(self, pred_list):

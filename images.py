@@ -33,7 +33,7 @@ def imresize(im, to_sizes):
     
     return padded_im
 
-def improcess(ims, to_sizes, to_rgb=True):
+def improcess(ims, to_sizes, to_rgb=True, normalise=True):
     '''
     Prepare an image for model's input (using OpenCV).
     Args:
@@ -50,7 +50,9 @@ def improcess(ims, to_sizes, to_rgb=True):
             im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
         im = imresize(im, to_sizes)
         imlist.append(im)
-    return np.array(imlist)/255
+    imlist = np.array(imlist)
+    if normalise: imlist = imlist / 255
+    return imlist
 
 def imread_from_path(im_path):
     '''
