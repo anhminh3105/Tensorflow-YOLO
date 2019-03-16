@@ -29,11 +29,15 @@ class Imager(object):
         return improcess(self.ims, self.transform_sizes)
     
     def ncs_preprocess(self):
-        ims = improcess(self.ims, self.transform_sizes, to_rgb=False)
+        ims = improcess(self.ims, self.transform_sizes, to_rgb=False, normalise=False) # ims are normalised by the ncs.
         return np.transpose(ims, [0, 3, 1, 2])
 
     def visualise_preds(self, pred_list):
-        return visualise(self.ims, pred_list, self.transform_sizes, self.namelist, self.palette)
+        self.ims = visualise(self.ims, pred_list, self.transform_sizes, self.namelist, self.palette)
+        return self.ims
 
     def imsave(self, ims):
         imwrite(ims)
+
+    def display_fps(self, fps):
+        return display_fps(self.ims[0], fps)
