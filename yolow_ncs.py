@@ -11,7 +11,7 @@ class YolowNCS(object):
 
     _ANCHORS = anchors_for_yolov3()
 
-    def __init__(self, model_name=None):
+    def __init__(self, model_name=None, num_requests=2):
         if model_name is None:
             model_name = 'ir/frozen_yolow'
         self.model=model_name + '.xml'
@@ -23,14 +23,30 @@ class YolowNCS(object):
         self.input_blob=next(iter(self.net.inputs))
         self.net.batch_size=1
         log.info('Loading model to the plugin')
-        self.exec_net=self.plugin.load(network=self.net)
+        self.current_request_id = 0
+        self.next_request_id = 1
+        self.num_requests = num_requests
+        self.exec_net=self.plugin.load(network=self.net, num_requests=self.num_requests)
 
-    def predict(self, input_list, confidence_theshold=.6, iou_theshould=.5):
+    def predict(self, input_list, confidence_theshold=.6, iou_theshould=.5, async_mode=False):
         batch_predictions = []
         get_from = 0
         input_size = input_list.shape[2]
         input_dict = {self.input_blob: input_list}
-        pred_dict = self.exec_net.infer(inputs=input_dict)
+        request_handle = self.exec_net.requests[self.current_request_id]
+        if async_mode:
+            next_request_id = self.current_request_id + 1
+            if next_request_id == self.num_requests:
+                next_request_id = 0
+        else:
+            request_handle.wait()
+            next_request_id = self.current_request_id
+        self.exec_net.start_async(request_id=next_request_id,
+                                  inputs=input_dict)
+        if async_mode:
+            self.current_request_id = next_request_id
+        request_handle.wait()
+        pred_dict = request_handle.outputs
         for preds in pred_dict.values():
             preds = np.transpose(preds, [0, 2, 3, 1])
             get_to = get_from + 3
@@ -38,3 +54,28 @@ class YolowNCS(object):
             get_from = get_to
         batch_predictions = np.concatenate(batch_predictions, axis=1)
         return predict(batch_predictions, confidence_theshold, iou_theshould)
+
+    # def predict(self, input_list, confidence_theshold=.6, iou_theshould=.5, async_mode=False):
+    #     batch_predictions = []
+    #     get_from = 0
+    #     input_size = input_list.shape[2]
+    #     input_dict = {self.input_blob: input_list}
+    #     request_handle = self.exec_net.requests[self.current_request_id]
+    #     if async_mode:
+    #         request_id = self.next_request_id
+    #     else:
+    #         request_handle.wait()
+    #         request_id = self.current_request_id
+    #     self.exec_net.start_async(request_id=request_id,
+    #                               inputs=input_dict)
+    #     if async_mode:
+    #         self.current_request_id, self.next_request_id = self.next_request_id, self.current_request_id
+    #     request_handle.wait()
+    #     pred_dict = request_handle.outputs
+    #     for preds in pred_dict.values():
+    #         preds = np.transpose(preds, [0, 2, 3, 1])
+    #         get_to = get_from + 3
+    #         batch_predictions.append(region_np(preds, self._ANCHORS[get_from:get_to], input_size))
+    #         get_from = get_to
+    #     batch_predictions = np.concatenate(batch_predictions, axis=1)
+    #     return predict(batch_predictions, confidence_theshold, iou_theshould)
