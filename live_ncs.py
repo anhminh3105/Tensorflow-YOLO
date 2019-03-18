@@ -40,7 +40,6 @@ while True:
 
     if key & 0xFF==ord('m'):
         async_mode = not async_mode
-        print("Switched to {} mode".format(mode))
 
 cam.release()
 cv2.destroyAllWindows()

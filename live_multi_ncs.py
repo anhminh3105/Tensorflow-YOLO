@@ -32,7 +32,6 @@ def live_job(input_buffer, output_buffer, async_mode, quit_event):
     pred_list = None
     
     while not quit_event.is_set():
-        mode = "async" if async_mode.value else "sync"
         # read from camera.
         _, frame = cam.read()
         imer.imset(frame)
@@ -56,7 +55,8 @@ def live_job(input_buffer, output_buffer, async_mode, quit_event):
             processing_frame_rate = round(processing_frame_count/duration)
             processing_frame_count = 0
             start_time = time()
-        
+            
+        mode = "async" if async_mode.value else "sync"
         fps_txt = '{} fps (detection: {} fps) - mode: {}'.format(frame_rate, processing_frame_rate, mode)
         frame = imer.display_fps(fps_txt)
         cv2.imshow('NCS YOLOv3 Live', frame)
@@ -69,7 +69,6 @@ def live_job(input_buffer, output_buffer, async_mode, quit_event):
 
         if key & 0xFF==ord('m'):
             async_mode.value = not async_mode.value
-            print("Switched to {} mode".format(mode))
 
     cam.release()
     cv2.destroyAllWindows()
@@ -99,7 +98,7 @@ def main(args):
     input_buffer = Queue(10)
     output_buffer = Queue()
     quit_event = Event()
-    async_mode = Value(c_bool, True)
+    async_mode = Value(c_bool, False)
     # create networks for each stick assign it to a separate process.
     p = Process(target=infer_job,
                 args=(num_sticks, num_requests, input_buffer, output_buffer, async_mode, quit_event),

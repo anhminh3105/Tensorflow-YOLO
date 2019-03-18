@@ -5,7 +5,7 @@ from yolow_ncs import YolowNCS
 from argparse import ArgumentParser
 from picamera.array import PiRGBArray
 from picamera import PiCamera
-from multiprocessing import Process, Queue, Event, Value
+from multiprocessing import Process, Queue, Event, Value, set_start_method
 from threading import Thread
 from ctypes import c_bool
 
@@ -26,7 +26,7 @@ def arg_builder():
 def live_job(input_buffer, output_buffer, async_mode, quit_event):
     imer = Imager()
     camera = PiCamera()
-    camera.resolution = (1024, 720)
+    camera.resolution = (720, 480)
     camera.framerate = 30
     rawCapture = PiRGBArray(camera)
     fps_display_interval = 1
@@ -69,7 +69,6 @@ def live_job(input_buffer, output_buffer, async_mode, quit_event):
         frame_count += 1
         rawCapture.truncate(0)
 
-
         key = cv2.waitKey(1)
         if key & 0xFF==ord('q'):
             quit_event.set()
@@ -77,10 +76,8 @@ def live_job(input_buffer, output_buffer, async_mode, quit_event):
 
         if key & 0xFF==ord('m'):
             async_mode.value = not async_mode.value
-            print("Switched to {} mode".format(mode))
 
     cv2.destroyAllWindows()
-
 
 def ncs_worker_thread(yl_ncs, input_buffer, output_buffer, async_mode, quit_event):
     while not quit_event.is_set():
@@ -106,7 +103,7 @@ def main(args):
     input_buffer = Queue(10)
     output_buffer = Queue()
     quit_event = Event()
-    async_mode = Value(c_bool, True)
+    async_mode = Value(c_bool, False)
     # create networks for each stick assign it to a separate process.
     p = Process(target=infer_job,
                 args=(num_sticks, num_requests, input_buffer, output_buffer, async_mode, quit_event),
