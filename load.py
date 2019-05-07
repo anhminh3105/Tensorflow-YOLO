@@ -2,15 +2,19 @@ import os
 import sys
 from pathlib import Path
 from urllib.request import urlretrieve
-
+from utils import *
 import numpy as np
 import tensorflow as tf
 
-class Weight_loader(object):
+class WeightLoader(object):
     
-    def __init__(self, var_list, path=None):
+    def __init__(self, var_list, model_type='full', path=None):
+        self.model_type = model_type
+        filenames = load_file_names()
+        self.filename = filenames[self.model_type]
         if path is None:
-            path='./yolov3.weights'           
+            path = './data/' + self.filename
+        self.url = 'https://pjreddie.com/media/files/' + self.filename
         self.var_list = var_list
         self.file = Path(path)
         self.major = 0
@@ -36,13 +40,15 @@ class Weight_loader(object):
         return tf.assign(var, val, validate_shape=True)
         
     def load_now(self):
-        print('\n\nLoad YOLOv3 weights from {}\n'.format(self.file))
-        if self.file.is_file() is False or os.path.getsize(self.file) != 248007048:
+        print('\n\nChecking weights from {}\n'.format(self.file))        
+        if (self.file.is_file() is False 
+        or (os.path.getsize(self.file) != 248007048 and self.model_type is 'full') 
+        or (os.path.getsize(self.file) != 35434956 and self.model_type is 'tiny')):
             #mess = "'{}' unexisted!".format(weight_file_path)
             #raise Exception(mess)
-            print('\n{} was not found! Start to download from the internet.'.format(self.file))
+            print('\n{} was not found or was incomplete! Start to download from the internet.'.format(self.file))
             self.download_weights()
-            
+        print('\n\nLoading weights from {}\n'.format(self.file))
         with open(self.file, 'rb') as f:
             self.major, self.minor, self.revision = np.fromfile(f, dtype=np.int32, count=3)
             self.seen = np.fromfile(f, dtype=np.float64, count=1)
@@ -54,6 +60,7 @@ class Weight_loader(object):
         while now < len(self.var_list):
             
             var_now = self.var_list[now]
+            print(var_now)
             if 'weights' in var_now.name:
                 next = now + 1
                 var_next = self.var_list[next]
@@ -90,7 +97,7 @@ class Weight_loader(object):
         return load_ops
     
     
-    def download_weights(self, url = 'https://pjreddie.com/media/files/yolov3.weights'):
+    def download_weights(self):
     
         # callback function to report the download progress.
         def reporthook(blocknum, blocksize, totalsize):
@@ -104,8 +111,8 @@ class Weight_loader(object):
                     sys.stderr.write("\n")
             else: # total size is unknown
                 sys.stderr.write("\r_%% %d/Unknown\n" % (readsofar))
-
-        filename = url.split(sep='/')[-1]
-        print('downloading ' + filename + ' from ' + url)
-        urlretrieve(url, filename=filename, reporthook=reporthook)
-        print('download complete')
+        
+        print('Downloading ' + self.filename + ' from ' + self.url)
+        urlretrieve(self.url, filename=self.file, reporthook=reporthook)
+        print('Download complete!')
+        
