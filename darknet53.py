@@ -4,7 +4,7 @@ from layers import Layers
 class Darknet53(Layers):
 
     def __init__(self, input, is_training=False):
-        self.is_training = is_training
+        super().__init__(is_training=is_training)
         self.input = input
 
     def dark_graph(self):

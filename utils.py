@@ -12,7 +12,7 @@ def load_class_names(path):
     return classes
 
 def anchors_for_yolov3(model_type='full'):
-    if model_type is 'full':
+    if model_type == 'full':
         return [(10, 13), (16, 30), (33, 23),
                 (30, 61), (62, 45), (59, 119),
                 (116, 90), (156, 198), (373, 326)]
