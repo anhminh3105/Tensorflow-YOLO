@@ -9,11 +9,9 @@ log=logging.getLogger()
 
 class YolowNCS(object):
 
-    _ANCHORS = anchors_for_yolov3()
-
-    def __init__(self, model_name=None, num_requests=2):
-        if model_name is None:
-            model_name = 'ir/frozen_yolow'
+    def __init__(self, model_type='full', num_requests=2):
+        model_name = 'data/ir/frozen_yolow_' + model_type
+        self._ANCHORS = anchors_for_yolov3(model_type)
         self.model=model_name + '.xml'
         self.weights=model_name + '.bin'
         self.plugin=IEPlugin(device='MYRIAD')

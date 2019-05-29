@@ -11,9 +11,8 @@ class Yolov3(Darknet53):
     num_predictions = objectness + coordinates + num_classes            
 
     def __init__(self, input, is_training=False):
-        self.is_training = is_training
+        super().__init__(input=input, is_training=is_training)
         self.sess = tf.Session()
-        self.input = input
         self.input_size = self.input.get_shape().as_list()[1]
 
     def graph(self):

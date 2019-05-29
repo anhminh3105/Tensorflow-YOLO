@@ -8,6 +8,11 @@ from threading import Thread
 from ctypes import c_bool
 def arg_builder():
     arg_parser = ArgumentParser()
+    arg_parser.add_argument('-m', '--model_type',
+                            help='the type of model to use \
+                                (default to the full model)',
+                            default='full',
+                            type=str)
     arg_parser.add_argument('-n', '--sticks',
                             help='the number of Movidius NCSes \
                                   to run inference on (default to 2).',
@@ -81,17 +86,18 @@ def ncs_worker_thread(yl_ncs, input_buffer, output_buffer, async_mode, quit_even
             pred_list = yl_ncs.predict(input_list, async_mode=async_mode.value)
             output_buffer.put(pred_list)
 
-def infer_job(num_sticks, num_requests, input_buffer, output_buffer, async_mode, quit_event):
+def infer_job(model_type, num_sticks, num_requests, input_buffer, output_buffer, async_mode, quit_event):
     threads = []
     for _ in range(num_sticks):
         th = Thread(target=ncs_worker_thread,
-                    args=(YolowNCS(num_requests=num_requests), input_buffer, output_buffer, async_mode, quit_event))
+                    args=(YolowNCS(model_type=model_type, num_requests=num_requests), input_buffer, output_buffer, async_mode, quit_event))
         th.start()
         threads.append(th)
     for th in threads:
         th.join()
 
 def main(args):
+    model_type = args.model_type
     num_sticks = args.sticks
     num_requests = args.requests
     processes = []
@@ -101,7 +107,7 @@ def main(args):
     async_mode = Value(c_bool, False)
     # create networks for each stick assign it to a separate process.
     p = Process(target=infer_job,
-                args=(num_sticks, num_requests, input_buffer, output_buffer, async_mode, quit_event),
+                args=(model_type, num_sticks, num_requests, input_buffer, output_buffer, async_mode, quit_event),
                 daemon=True)
     p.start()
     processes.append(p)

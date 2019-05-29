@@ -1,5 +1,5 @@
 # YOLOw
-A YOLOv3-416 implementation on TensorFlow Low-Level API
+A YOLOv3 implementation on TensorFlow Low-Level API
 
 ![webp net-gifmaker 3](https://user-images.githubusercontent.com/18170028/52903429-d9288180-3225-11e9-8249-ed435b234931.gif)
 
@@ -11,8 +11,8 @@ I acknowledged that there are a lot of good works on YOLO already but since I am
 
 ## Summary:
 * The model was made in pure TensorFlow Low-Level API, detection outputs were processed in NumPy and OpenCV2 was used for image manipulations.
-* Non TensorFlow concise easy to use interface for loading, predicting on YOLOv3-416 model. (training to be added very soon)
-* Also come with a concise easy to use interface for loading, pre-processing and post-processing images.
+* Non TensorFlow concisely easy to use interface for loading, predicting on YOLOv3 model. (training to be added very soon)
+* Also come with a concisely easy to use interface for loading, pre-processing and post-processing images.
 * Interface for running on Intel NCS (required installation of Open-VINO)
 * Integratable to any applications.
 * Code was written as modular as possible.
@@ -21,12 +21,15 @@ I acknowledged that there are a lot of good works on YOLO already but since I am
 ## What comes next:
 1. ~~Frozen model generation and handling, for needlessness of weight file loading every launch time.~~
 2. ~~Code to run model on Movidius Raspberry Pi.~~
+3. ~~Supports for the tiny model~~
 3. Trainer for custom object detection.
 
 ## Instructions:
 
 ### Dependencies:
-- TensorFlow/TensorFlow-GPU
+- Python 3.6.8
+- TensorFlow/TensorFlow-GPU 1.12
+- OPENVINO toolkit version 2018.0.5.456
 - NumPy
 - OpenCV2
 - Jupyter Notebook (only pre-installed in Anaconda)
@@ -56,7 +59,12 @@ If you have never try to install Tensorflow-GPU in the prior way, I would recomm
       ```
 
 ### Usage:
-* To detect on images, open file ***detect_images.ipynb*** with `jupyter notebook` and specify either the path to the image or the directory of images to the call of the method `imset_frompath(path)`, then run all the code. Output images will be saved to `outputs/` of the current working directory.
+* To detect on images, put them to path `data/images` and run the following command in prompt/conda prompt:
+```
+python detect_images.py
+```
+
+* (don't try to read this)~~To detect on images, open file ***detect_images.ipynb*** with `jupyter notebook` and specify either the path to the image or the directory of images to the call of the method `imset_frompath(path)`, then run all the code. Output images will be saved to `outputs/` of the current working directory.~~
 ![image](https://user-images.githubusercontent.com/18170028/52904485-ab4b3900-3235-11e9-9a79-c23e94c1bf28.png)
 * To detect live on camera, run the following command in prompt/conda prompt:
     ```
@@ -78,13 +86,13 @@ If you have never try to install Tensorflow-GPU in the prior way, I would recomm
 
      3. install open-vino to C:\ drive
 
-  then just run generate_ir.bat in a command prompt and see Usage.
+  then just run `generate_yolow_full_ir.bat` or `generate_yolow_tiny_ir.bat` in a command prompt and see Usage.
 
 - else:
 
      1. Activate your virtual environment (skip if you dont use it)
 
-     2. run the file C:\Intel\computer_vision_sdk\bin\setupvars.bat to source open-vino SDK for Python
+     2. run the file C:\Intel\computer_vision_sdk\bin\setupvars.bat to source open-vino SDK for Python (or just run `activate_openvino_running_env.bat`)
 
      3. run the following command to generate the intermediate representations (IR):
          ```
@@ -94,17 +102,15 @@ If you have never try to install Tensorflow-GPU in the prior way, I would recomm
 #### Usage
 - Start live detection using the NCS: (on PC/PRi with external camera)
     ```
-    python live_ncs.py
+    python live_ncs.py (python live_multi_ncs.py if you are using many NCSes)
     ```
 - Start live detection using the NCS: (on RPi with Pi camera module)
     ```
-    python live_ncs_rpi.py
+    python live_ncs_rpi.py (python live_multi_ncs_rpi.py if you are using many NCSes)
     ```
   
 ## References:
 [Original YOLO](https://github.com/pjreddie/darknet/wiki/YOLO:-Real-Time-Object-Detection)
-
-[DarkFlow](https://github.com/thtrieu/darkflow)
 
 [TensorFlow-SLIM YOLOv3](https://github.com/mystic123/tensorflow-yolo-v3)
 
