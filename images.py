@@ -54,6 +54,7 @@ def improcess(ims, to_sizes, to_rgb=True, normalise=True):
     if normalise: imlist = imlist / 255
     return imlist
 
+
 def imread_from_path(im_path):
     '''
     read one or all images from im_path.
@@ -70,6 +71,7 @@ def imread_from_path(im_path):
     else:
         ims = [p]
     return [cv2.imread(str(im), cv2.IMREAD_COLOR) for im in ims]
+    
 
 def rescale_vertex(vtx, from_wh, to_wh):
     if from_wh is int:
@@ -83,7 +85,8 @@ def rescale_vertex(vtx, from_wh, to_wh):
     vtx = (vtx - pad) / scale_ratio
     return vtx.astype(np.int32)
 
-def add_overlays(frame, preds, pred_wh, classnames, palette):
+
+def add_overlays_v1(frame, preds, pred_wh, labels, palette):
     tops, bots, scores, classes = preds
     if not tops:
         return frame
@@ -101,9 +104,9 @@ def add_overlays(frame, preds, pred_wh, classnames, palette):
         colour = palette[cls]
         top = tuple(top)
         bot = tuple(bot)
-        # txt = '{}:{}%'.format(classnames[cls], int(round(score*100)))
+        # txt = '{}:{}%'.format(labels[cls], int(round(score*100)))
         frame = cv2.rectangle(frame, top, bot, colour, b_thick)
-        txt = '{}'.format(classnames[cls])
+        txt = '{}'.format(labels[cls])
         t_size = cv2.getTextSize(txt, font_face, t_scale, t_thick)[0]
         t_box_bot = top
         t_box_top = (t_box_bot[0] + t_size[0] + b_thick*4, t_box_bot[1] - t_size[1] - b_thick*6)
@@ -116,14 +119,73 @@ def add_overlays(frame, preds, pred_wh, classnames, palette):
         frame = cv2.putText(frame, txt, t_orig, font_face, t_scale, (255, 255, 255), t_thick)
     return frame
 
-def visualise(orig_imlist, pred_list, pred_ranges, classnames, palette):
+
+b_thick = 3
+t_thick = 2
+t_scale = 1
+def add_overlays_v2(obj, orig_frame, labels_map, palette):
+    origin_im_size = orig_frame.shape[:-1]
+    if obj['ymax'] > origin_im_size[0]:
+        obj['ymax'] = origin_im_size[0] - b_thick
+    if obj['xmax'] > origin_im_size[1]:
+        obj['xmax'] = origin_im_size[1] - b_thick
+    if obj['xmin'] < 0:
+        obj['xmin'] = 0 + b_thick
+    if obj['ymin'] < 0:
+        obj['ymin'] = 0 + b_thick
+    det_label = labels_map[obj['class_id']] if labels_map and len(labels_map) >= obj['class_id'] else \
+        str(obj['class_id'])
+    txt = '{}'.format(det_label)
+    colour = palette[obj['class_id']]
+    font_face = cv2.FONT_HERSHEY_SIMPLEX
+    cv2.rectangle(orig_frame, (obj['xmin'], obj['ymin']), (obj['xmax'], obj['ymax']), colour, b_thick)
+    t_size = cv2.getTextSize(txt, font_face, t_scale, t_thick)[0]
+    if obj['xmin'] + t_size[0] > origin_im_size[1]:
+        obj['xmin'] = origin_im_size[1] - t_size[0] - b_thick*2
+    t_box_bot = obj['xmin'], obj['ymin']
+    t_box_top = (t_box_bot[0] + t_size[0] + b_thick, t_box_bot[1] - t_size[1] - b_thick*3)
+    
+    t_orig = t_box_bot[0]+b_thick, t_box_bot[1]-b_thick*2
+    if t_box_top[1] < 0:
+        t_box_top = t_box_bot
+        t_box_bot = (t_box_top[0] + t_size[0] + b_thick, t_box_top[1] + t_size[1] + b_thick*3)
+        t_orig = t_box_top[0] + b_thick, t_box_top[1] + t_size[1] + b_thick
+    cv2.rectangle(orig_frame, t_box_top, t_box_bot, colour, -1)
+    cv2.rectangle(orig_frame, t_box_top, t_box_bot, colour, b_thick)
+    cv2.putText(orig_frame, txt, t_orig, font_face, t_scale, (0, 0, 0), t_thick)
+    return orig_frame
+
+
+def visualise(orig_imlist, pred_list, input_size, labels, palette):
     '''
     Visualise predictions on original images.
     '''
     imlist = []
     for im, preds in zip(orig_imlist, pred_list):
-        imlist.append(add_overlays(im, preds, pred_ranges, classnames, palette))
+        tops, bots, scores, classes = preds
+        if tops:
+            im_size = im.shape[:-1][::-1]
+            vtcs = np.concatenate([tops, bots], axis=0)
+            vtcs = rescale_vertex(vtcs, input_size, im_size)
+            tops, bots = np.split(vtcs, 2)
+            for top, bot, score, cls in zip(tops, bots, scores, classes):
+                obj = dict(xmin=top[0], ymin=top[1], xmax=bot[0], ymax=bot[1],
+                            class_id=cls, confidence=score)
+                im = add_overlays_v2(obj, im, labels, palette)
+                
+        imlist.append(im)
+        # imlist.append(add_overlays(im, preds, input_size, labels, palette))
     return imlist
+
+
+def scale_bbox(x, y, h, w, class_id, confidence, scale_ratio, paddings):
+    ypad, xpad = paddings
+    xmin = int((x - w / 2 - xpad) / scale_ratio)
+    ymin = int((y - h / 2 - ypad) / scale_ratio)
+    xmax = int(xmin + w / scale_ratio)
+    ymax = int(ymin + h / scale_ratio)
+    return dict(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax, class_id=class_id, confidence=confidence)
+
 
 def imwrite(ims):
     p = Path('.').absolute()
@@ -133,6 +195,6 @@ def imwrite(ims):
     [cv2.imwrite(save_dir + '/{}.jpg'.format(i), im) for i, im in zip(range(len(ims)), ims)]
     print('Images have been saved to {}'.format(save_dir))
 
-def display_fps(frame, fps_txt):
-    cv2.putText(frame, fps_txt, (2, 20), cv2.FONT_HERSHEY_SIMPLEX, .65, (255, 255, 255), 2, 2)
+def display_mess(frame, mess):
+    cv2.putText(frame, mess, (2, 20), cv2.FONT_HERSHEY_SIMPLEX, .65, (255, 255, 255), 2, 2)
     return frame

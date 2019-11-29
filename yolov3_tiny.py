@@ -3,18 +3,16 @@ from yolov3 import Yolov3
 from utils import *
 
 class Yolov3Tiny(Yolov3):
-
-    _ANCHORS = anchors_for_yolov3(model_type='tiny')
-        
     def _detection_block(self, input, num_kernels, anchor_list):
         output_depth = len(anchor_list)*self.num_predictions
         input = self.conv2d_bn(input=input,
                                num_kernels=num_kernels)
-        detections = self.detection(input=input,
-                                    output_depth=output_depth,
-                                    anchor_list=anchor_list,
-                                    input_size=self.input_size)
-        return detections
+        input = self.conv2d(input=input,
+                            num_kernels=output_depth,
+                            with_bias=True)
+        input = self.region(input, anchor_list)   
+        return input
+
 
     def graph(self):
         with tf.variable_scope('yolov3_tiny'):
@@ -33,7 +31,7 @@ class Yolov3Tiny(Yolov3):
                                    num_kernels=256,
                                    kernel_size=1)
             route_2 = input
-            detections_1 = self._detection_block(input=input,
+            predictions_1 = self._detection_block(input=input,
                                                  num_kernels=512,
                                                  anchor_list=self._ANCHORS[3:6])       
             input = self.conv2d_bn(input=route_2,
@@ -42,9 +40,9 @@ class Yolov3Tiny(Yolov3):
             input = self._upsample(input)
             input = tf.concat(values=[input, route_1],
                               axis=-1)
-            detections_2 = self._detection_block(input=input,
+            predictions_2 = self._detection_block(input=input,
                                                  num_kernels=256,
                                                  anchor_list=self._ANCHORS[:3])
-        return tf.concat(values=[detections_1, detections_2],
+        return tf.concat(values=[predictions_1, predictions_2],
                          axis=1,
                          name='output')

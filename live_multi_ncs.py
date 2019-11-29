@@ -1,17 +1,22 @@
-import sys, cv2
-from imager import *
+import sys
 from time import time
-from yolow_ncs import YolowNCS
+from ctypes import c_bool
+from threading import Thread
 from argparse import ArgumentParser
 from multiprocessing import Process, Queue, Event, Value
-from threading import Thread
-from ctypes import c_bool
+
+import cv2
+
+from images import display_mess
+from yolow_ncs import YolowNCS
+from utils import parse_args_from_txt
+
 def arg_builder():
     arg_parser = ArgumentParser()
-    arg_parser.add_argument('-m', '--model_type',
-                            help='the type of model to use \
-                                (default to the full model)',
-                            default='full',
+    arg_parser.add_argument('-c', '--config',
+                            help='path to the model config file\
+                                 (default to data/config/ncs_yolov3_full_416.cfg)',
+                            default='data/config/ncs_yolov3_full_416.cfg',
                             type=str)
     arg_parser.add_argument('-n', '--sticks',
                             help='the number of Movidius NCSes \
@@ -25,33 +30,46 @@ def arg_builder():
                             type=int)
     return arg_parser.parse_args()
 
-def live_job(input_buffer, output_buffer, async_mode, quit_event):
-    imer = Imager()
-    cam = cv2.VideoCapture(0)
+def live_job(model_args, input_buffer, output_buffer, async_mode, quit_event):
     fps_display_interval = 1
     frame_rate = 0
     frame_count = 0
     processing_frame_rate = 0
     processing_frame_count = 0
-    start_time = time()
     pred_list = None
-    
+    ## FOR PICAMERA HARDWARE
+    # cam = PiCamera()
+    # cam.resolution = (720, 480)
+    # cam.framerate = 30
+    # rawCapture = PiRGBArray(cam)
+    ##
+    ## FOR OTHER CASES
+    cam = cv2.VideoCapture(0)
+    ##
+    start_time = time()
+    ## FOR PICAMERA HARDWARE
+    # for frame in cam.capture_continuous(rawCapture, format="bgr", use_video_port=True)
+    #    frame = frame.array
+    ##
+    ## FOR OTHER CASES
     while not quit_event.is_set():
         # read from camera.
         _, frame = cam.read()
-        imer.imset(frame)
+    ##
+        #temporary fix for error VIDIOC_DQBUF: Resource temporarily unavailable.
+        if frame == None:
+            continue
+
         # makes space in the buffer if it's full.
         if input_buffer.full():
             input_buffer.get()
         # put frame to the processing buffer.
-        input_list = imer.ncs_preprocess()
-        input_buffer.put(input_list)
+        input_buffer.put(frame)
         # wait to get the value.
-        if not output_buffer.empty():
-            pred_list = output_buffer.get()
-            processing_frame_count += 1
-        if pred_list is not None:
-            imer.visualise_preds(pred_list) 
+        while output_buffer.empty():
+            continue
+        frame = output_buffer.get()
+        processing_frame_count += 1
 
         duration = time() - start_time
         if duration > fps_display_interval:
@@ -62,8 +80,8 @@ def live_job(input_buffer, output_buffer, async_mode, quit_event):
             start_time = time()
             
         mode = "async" if async_mode.value else "sync"
-        fps_txt = '{} fps (detection: {} fps) - mode: {}'.format(frame_rate, processing_frame_rate, mode)
-        frame = imer.display_fps(fps_txt)
+        status = '{} fps (detection: {} fps) - mode: {}'.format(frame_rate, processing_frame_rate, mode)
+        frame = display_mess(frame, status)
         cv2.imshow('NCS YOLOv3 Live', frame)
         frame_count += 1
 
@@ -82,32 +100,43 @@ def live_job(input_buffer, output_buffer, async_mode, quit_event):
 def ncs_worker_thread(yl_ncs, input_buffer, output_buffer, async_mode, quit_event):
     while not quit_event.is_set():
         if not input_buffer.empty():
-            input_list = input_buffer.get()
-            pred_list = yl_ncs.predict(input_list, async_mode=async_mode.value)
-            output_buffer.put(pred_list)
+            frame = input_buffer.get()
+            yl_ncs.set_input(frame)
+            # In async mode, early frames causes NaN values which breaks the programme,
+            # skip it for now.
+            try:
+                frame = yl_ncs.predict(async_mode=async_mode)[0]
+            except:
+                pass           
+            output_buffer.put(frame)
 
-def infer_job(model_type, num_sticks, num_requests, input_buffer, output_buffer, async_mode, quit_event):
+def infer_job(model_args, sticks, requests, input_buffer, output_buffer, async_mode, quit_event):
     threads = []
-    for _ in range(num_sticks):
+    for _ in range(sticks):
         th = Thread(target=ncs_worker_thread,
-                    args=(YolowNCS(model_type=model_type, num_requests=num_requests), input_buffer, output_buffer, async_mode, quit_event))
+                    args=(YolowNCS(model_args['model_name_path'], 
+                                   (model_args['width'], model_args['height']),
+                                   model_args['labels'],
+                                   requests), 
+                    input_buffer, 
+                    output_buffer, 
+                    async_mode, 
+                    quit_event))
         th.start()
         threads.append(th)
     for th in threads:
         th.join()
 
 def main(args):
-    model_type = args.model_type
-    num_sticks = args.sticks
-    num_requests = args.requests
+    model_args = parse_args_from_txt(args.config)
     processes = []
     input_buffer = Queue(10)
     output_buffer = Queue()
     quit_event = Event()
-    async_mode = Value(c_bool, False)
+    async_mode = Value(c_bool, True)
     # create networks for each stick assign it to a separate process.
     p = Process(target=infer_job,
-                args=(model_type, num_sticks, num_requests, input_buffer, output_buffer, async_mode, quit_event),
+                args=(model_args, args.sticks, args.requests, input_buffer, output_buffer, async_mode, quit_event),
                 daemon=True)
     p.start()
     processes.append(p)
@@ -118,7 +147,7 @@ def main(args):
     #     processes.append(p)
     #start live job.
     p = Process(target=live_job,
-                args=(input_buffer, output_buffer, async_mode, quit_event),
+                args=(model_args, input_buffer, output_buffer, async_mode, quit_event),
                 daemon=True)
     p.start()
     processes.append(p)

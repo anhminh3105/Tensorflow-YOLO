@@ -7,16 +7,13 @@ import numpy as np
 import tensorflow as tf
 
 class WeightLoader(object):
-    
-    def __init__(self, var_list, model_type='full', path=None):
-        self.model_type = model_type
-        filenames = load_file_names()
-        self.filename = filenames[self.model_type]
-        if path is None:
-            path = './data/' + self.filename
-        self.url = 'https://pjreddie.com/media/files/' + self.filename
+
+    default_models = load_default_models()
+
+    def __init__(self, var_list, weight_file):
+        self.file = Path(weight_file)
+        self.filename = os.path.basename(weight_file)
         self.var_list = var_list
-        self.file = Path(path)
         self.major = 0
         self.minor = 0
         self.revision = 0
@@ -24,7 +21,14 @@ class WeightLoader(object):
         self.offset = 0
         self.weights = []
         self.weights_size = 0
+        print('\n\nChecking weights from {}\n'.format(self.file))        
+        if not self.file.is_file():
+            print('\n{} was not available! Start to download from the internet.'.format(self.file))
+            self.url = 'https://pjreddie.com/media/files/' + self.filename
+            self.download_weights()       
+        print('\n\nLoading weights from {}\n'.format(self.file))
         
+
     def load(self, var):
         var_shape = var.shape.as_list()
         var_size = np.prod(var_shape)
@@ -38,17 +42,9 @@ class WeightLoader(object):
             val = val.reshape(var_shape)
         self.offset = read_to
         return tf.assign(var, val, validate_shape=True)
-        
+       
+
     def load_now(self):
-        print('\n\nChecking weights from {}\n'.format(self.file))        
-        if (self.file.is_file() is False 
-        or (os.path.getsize(self.file) != 248007048 and self.model_type is 'full') 
-        or (os.path.getsize(self.file) != 35434956 and self.model_type is 'tiny')):
-            #mess = "'{}' unexisted!".format(weight_file_path)
-            #raise Exception(mess)
-            print('\n{} was not found or was incomplete! Start to download from the internet.'.format(self.file))
-            self.download_weights()
-        print('\n\nLoading weights from {}\n'.format(self.file))
         with open(self.file, 'rb') as f:
             self.major, self.minor, self.revision = np.fromfile(f, dtype=np.int32, count=3)
             self.seen = np.fromfile(f, dtype=np.float64, count=1)
