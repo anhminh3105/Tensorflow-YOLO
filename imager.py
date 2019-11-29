@@ -1,17 +1,18 @@
 import numpy as np
 from utils import *
 from images import *
+
 np.random.seed(2)
 
 class Imager(object):
     
-    def __init__(self, transform_sizes=416, class_name_file='./data/coco.names'):
-        if type(transform_sizes) is int:
-            self.transform_sizes = (transform_sizes, transform_sizes)
+    def __init__(self, input_size, labels):
+        if type(input_size) is int:
+            self.input_size = (input_size, input_size)
         else:
-            self.transform_sizes = transform_sizes
-        self.namelist = load_class_names(class_name_file)
-        self.palette = np.random.randint(0, 256, (len(self.namelist), 3)).tolist()
+            self.input_size = input_size
+        self.labels = labels
+        self.palette = np.random.randint(0, 256, (len(self.labels), 3)).tolist()
 
     def imset_from_path(self, path):
         ims = np.array(imread_from_path(path))
@@ -25,19 +26,30 @@ class Imager(object):
             ims = [ims]
         self.ims = ims
 
-    def preproces(self):
-        return improcess(self.ims, self.transform_sizes)
+    def preprocess(self):
+        return improcess(self.ims, self.input_size)
     
     def ncs_preprocess(self):
-        ims = improcess(self.ims, self.transform_sizes, to_rgb=False, normalise=False) # ims are normalised by the ncs.
-        return np.transpose(ims, [0, 3, 1, 2])
+        ims = improcess(self.ims, self.input_size, to_rgb=False, normalise=False) # ims are normalised by the ncs.
+        ims = np.transpose(np.array(ims), [0, 3, 1, 2])
+        return np.expand_dims(ims, 1)
 
     def visualise_preds(self, pred_list):
-        self.ims = visualise(self.ims, pred_list, self.transform_sizes, self.namelist, self.palette)
+        self.ims = visualise(self.ims, pred_list, self.input_size, self.labels, self.palette)
+        return self.ims
+
+    def ncs_visualise_preds(self, objects_list):
+        imlist = list()
+        for im, objects in zip(self.ims, objects_list):
+            if not objects:
+                imlist.append(im)
+                continue
+            for obj in objects:
+                add_overlays_v2(obj, im, self.labels, self.palette)
+            imlist.append(im)
+        self.ims = imlist
         return self.ims
 
     def imsave(self, ims):
         imwrite(ims)
 
-    def display_fps(self, fps):
-        return display_fps(self.ims[0], fps)

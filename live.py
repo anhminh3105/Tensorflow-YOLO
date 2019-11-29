@@ -1,22 +1,32 @@
-import cv2
 from time import time
-from yolow import Yolow
-from imager import *
 from argparse import ArgumentParser
+
+import cv2
+
+from yolow import Yolow
+from images import display_mess
+from utils import parse_args_from_txt
+
 
 def arg_builder():
     arg_parser = ArgumentParser()
-    arg_parser.add_argument('-m', '--model_type',
-                            help='the type of model to use \
-                                (default to the full model)',
-                            default='full',
+    arg_parser.add_argument('-c', '--config',
+                            help='path to the model config file',
+                            required=True,
                             type=str)
     return arg_parser.parse_args()
 
+
 def main(args):
-    imer = Imager()
-    yl= Yolow(args.model_type)
-    cam = cv2.VideoCapture(0)
+    yl = Yolow(args['type'],
+                args['model'],
+                args['anchors'],
+                args['num_classes'],
+                (args['width'], args['height']),
+                labels=args['labels'])
+    cam = cv2.VideoCapture(2)
+    cam.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+    cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
     fps_display_interval = 3
     frame_rate = 0
     frame_count = 0
@@ -24,10 +34,11 @@ def main(args):
 
     while True:
         _, frame = cam.read()
-        imer.imset(frame)
-        input_list = imer.preproces()
-        pred_list = yl.predict(input_list)
-        imer.visualise_preds(pred_list)
+        # temporary fix for error VIDIOC_DQBUF: Resource temporarily unavailable.
+        if frame == None:
+            continue
+        yl.set_input(frame)
+        frame = yl.predict()[0]
 
         duration = time() - start_time
         if duration >= fps_display_interval:
@@ -36,7 +47,7 @@ def main(args):
             frame_count = 0
         
         fps_txt = '{} fps'.format(frame_rate)
-        frame = imer.display_fps(fps_txt)
+        frame = display_mess(frame, fps_txt)
         cv2.imshow('YOLOv3 Live', frame)
         frame_count += 1
 
@@ -46,5 +57,7 @@ def main(args):
     cam.release()
     cv2.destroyAllWindows()
 
+
 if __name__ == "__main__":
-    main(arg_builder())
+    args = arg_builder()
+    main(parse_args_from_txt(args.config))
